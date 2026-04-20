@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1018;
+            --surface: #171724;
+            --surface2: #1e2030;
+            --surface3: #26283c;
+            --border: #2b2f43;
+            --border2: #343a54;
+            --accent: #7c6af7;
+            --accent2: #f7a26a;
+            --safe: #3dd68c;
+            --safe2: #22c57a;
+            --warning: #f5c518;
+            --danger: #f16b6b;
+            --text: #f3f3f9;
+            --text2: #c8c8df;
+            --muted: #9aa0c7;
+            --muted2: #7f86a8;
+            --radius: 14px;
+            --radius-sm: 9px;
+        }
+
+        :root.light {
+            --bg: #eef0f8;
+            --surface: #ffffff;
+            --surface2: #f6f7fb;
+            --surface3: #e6e8f1;
+            --border: #c8cad8;
+            --border2: #b8bbd0;
+            --accent: #4c42d6;
+            --accent2: #c56a2a;
+            --safe: #12804f;
+            --safe2: #0f6b42;
+            --warning: #a97e0f;
+            --danger: #bb3636;
+            --text: #111325;
+            --text2: #2f3351;
+            --muted: #5d627f;
+            --muted2: #7c82a6;
+            --radius: 14px;
+            --radius-sm: 9px;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; transition: background 0.3s ease, border-color 0.3s ease, transform 0.15s;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover { background: var(--surface3); border-color: var(--accent); transform: scale(1.08); }
+        .theme-toggle:active { transform: scale(0.93); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 32px 18px 88px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .container { max-width: 860px; margin: 0 auto; }
+
+        /* ── HEADER ── */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.65rem; font-weight: 700;
+            letter-spacing: -0.3px; white-space: nowrap;
+        }
+        .logo span { color: var(--accent); }
+
+        .user-bar {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 100px; padding: 7px 14px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #a78df5);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; font-weight: 700; color: #fff;
+        }
+        .user-email { font-size: 0.82rem; color: var(--muted2); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .logout-btn {
+            font-size: 0.78rem; color: var(--danger); text-decoration: none;
+            font-weight: 500; padding: 3px 9px;
+            border: 1px solid rgba(241,107,107,0.25); border-radius: 100px;
+            transition: background 0.2s;
+        }
+        .logout-btn:hover { background: rgba(241,107,107,0.1); }
+
+        /* Period label */
+        .period-label-bar {
+            font-size: 0.82rem; color: var(--muted);
+            margin-bottom: 16px; padding-left: 2px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .period-label-bar strong { color: var(--text2); font-weight: 500; }
+
+        /* ── STATS ── */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-bottom: 14px;
+        }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 18px 20px;
+            position: relative; overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .stat-card.budget::after   { background: var(--accent); }
+        .stat-card.spent::after    { background: var(--accent2); }
+        .stat-card.remaining::after { background: var(--safe); }
+        .stat-card.remaining.over::after { background: var(--danger); }
+
+        .stat-label {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--muted); margin-bottom: 8px; font-weight: 600;
+        }
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem; font-weight: 700; line-height: 1; letter-spacing: -0.5px;
+        }
+        .stat-card.budget .stat-value   { color: var(--accent); }
+        .stat-card.spent .stat-value    { color: var(--accent2); }
+        .stat-card.remaining .stat-value { color: var(--safe); }
+        .stat-card.remaining.over .stat-value { color: var(--danger); }
+
+        .progress-wrap { margin-top: 10px; }
+        .progress-row { display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--muted); margin-bottom: 5px; }
+        .progress-bar { height: 4px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
+
+        /* ── SAVINGS GOAL ── */
+        .savings-bar-wrap {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .savings-bar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .savings-bar-label { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+        .savings-bar-amount { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--safe); }
+        .savings-bar-track { height: 6px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+        .savings-bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--safe2), var(--safe)); transition: width 0.7s ease; }
+
+        /* ── PERSONALITY ── */
+        .personality-bar {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px 18px;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .personality-label { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; white-space: nowrap; }
+        .personality-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .badge {
+            font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+            font-size: 0.85rem; padding: 5px 12px; border-radius: 100px;
+        }
+        .badge.safe    { background: rgba(61,214,140,0.12); color: var(--safe); }
+        .badge.warning { background: rgba(245,197,24,0.12); color: var(--warning); }
+        .badge.danger  { background: rgba(241,107,107,0.12); color: var(--danger); }
+        .badge.neutral { background: rgba(110,110,138,0.12); color: var(--muted); }
+        .personality-detail { font-size: 0.82rem; color: var(--text2); }
+
+        .alert-banner {
+            background: rgba(241,107,107,0.08);
+            border: 1px solid rgba(241,107,107,0.25);
+            color: var(--danger);
+            padding: 12px 18px; border-radius: var(--radius);
+            margin-bottom: 16px; font-size: 0.95rem; font-weight: 500;
+        }
+
+        /* ── REVERT BANNER ── */
+        .revert-banner {
+            background: rgba(124,106,247,0.08);
+            border: 1px solid rgba(124,106,247,0.28);
+            border-radius: var(--radius); padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap;
+        }
+        .revert-banner-text { font-size: 0.95rem; color: var(--text2); }
+        .revert-banner-text strong { color: var(--accent); }
+        .revert-banner-text small { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 2px; }
+        .revert-banner-btns { display: flex; gap: 8px; flex-shrink: 0; }
+        .revert-btn {
+            color: #fff; font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600; font-size: 0.82rem;
+            padding: 8px 14px; border-radius: var(--radius-sm); border: none;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .revert-btn.undo { background: var(--accent); }
+        .revert-btn.keep { background: var(--safe2); }
+        .revert-btn:hover { opacity: 0.82; }
+
+        /* ── FORMS ── */
+        .forms-row {
+            display: grid; grid-template-columns: 1fr 1.5fr;
+            gap: 14px; margin-bottom: 28px;
+        }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 22px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem; font-weight: 600; margin-bottom: 14px; color: var(--text);
+        }
+        .form-group { margin-bottom: 13px; }
+
+        label {
+            display: block; font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; font-weight: 600;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%; background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 11px 14px; color: var(--text);
+            font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,106,247,0.12); }
+
+        .period-selector-form { display: flex; gap: 5px; margin-bottom: 11px; }
+        .period-btn-form {
+            flex: 1; background: var(--surface2); border: 1px solid var(--border);
+            color: var(--muted); font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+            padding: 8px 0; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s ease;
+        }
+        .period-btn-form.active { background: rgba(124,106,247,0.18); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 11px 18px; border-radius: var(--radius-sm); border: none;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s; width: 100%;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { opacity: 0.88; box-shadow: 0 4px 14px rgba(124,106,247,0.28); }
+        .btn-danger { background: rgba(241,107,107,0.1); color: var(--danger); border: 1px solid rgba(241,107,107,0.25); margin-top: 8px; }
+        .btn-danger:hover { background: rgba(241,107,107,0.18); }
+        .btn:active { transform: scale(0.97); }
+
+        /* ── EXPENSE LIST ── */
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif; font-size: 1.02rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .count-pill {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 100px; font-size: 0.75rem; color: var(--muted);
+            padding: 4px 10px; font-family: 'Inter', sans-serif; font-weight: 500;
+        }
+        .clear-all-btn {
+            font-size: 0.78rem; font-weight: 500; color: var(--muted);
+            background: none; border: 1px solid var(--border2); border-radius: 8px;
+            padding: 5px 12px; cursor: pointer; text-decoration: none;
+            transition: all 0.3s ease; font-family: 'Inter', sans-serif;
+        }
+        .clear-all-btn:hover { color: var(--danger); border-color: rgba(241,107,107,0.35); background: rgba(241,107,107,0.06); }
+
+        .category-block { margin-bottom: 18px; }
+        .category-header { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+        .category-chip {
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; padding: 4px 10px; border-radius: 100px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .expense-list { display: flex; flex-direction: column; gap: 8px; }
+        .expense-item {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+        .expense-item:hover { border-color: rgba(124,106,247,0.35); background: var(--surface2); }
+
+        .expense-left { display: flex; align-items: center; gap: 12px; }
+        .expense-icon {
+            width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+            background: rgba(110,110,138,0.1);
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .expense-name { font-weight: 500; font-size: 0.93rem; color: var(--text); }
+        .expense-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+        .expense-right { display: flex; align-items: center; gap: 10px; }
+        .expense-amount { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.96rem; }
+
+        .delete-btn {
+            background: transparent; border: 1px solid transparent; color: var(--muted2);
+            cursor: pointer; width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; transition: all 0.2s; text-decoration: none;
+        }
+        .delete-btn:hover { background: rgba(241,107,107,0.1); border-color: rgba(241,107,107,0.28); color: var(--danger); }
+
+        .empty-state {
+            text-align: center; padding: 38px 20px; color: var(--muted);
+            background: var(--surface); border: 1px dashed var(--border2); border-radius: var(--radius);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* ── HISTORY SECTION ── */
+        .history-section { margin-top: 36px; }
+
+        .history-section-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 2px; margin-bottom: 12px;
+        }
+        .history-section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem; font-weight: 600; color: var(--text2);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .history-period-count {
+            font-size: 0.73rem; color: var(--muted); font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .history-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .history-card.open { border-color: var(--border2); }
+
+        .history-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; cursor: pointer; transition: background 0.2s;
+        }
+        .history-header:hover { background: var(--surface2); }
+
+        .history-header-left { display: flex; align-items: center; gap: 10px; }
+        .history-period-icon { font-size: 1rem; flex-shrink: 0; }
+        .history-label { font-family: 'Space Grotesk', sans-serif; font-size: 0.93rem; font-weight: 600; color: var(--text); }
+        .history-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+        .history-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .history-total { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.97rem; color: var(--accent2); white-space: nowrap; }
+        .history-arrow { color: var(--muted2); font-size: 0.75rem; transition: transform 0.3s; flex-shrink: 0; }
+        .history-card.open .history-arrow { transform: rotate(180deg); }
+
+        .history-actions { display: flex; gap: 6px; }
+        .history-btn {
+            font-size: 0.78rem; font-weight: 600; padding: 5px 10px;
+            border-radius: 7px; border: none; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif; white-space: nowrap;
+        }
+        .history-btn:hover { opacity: 0.78; }
+        .history-btn.reapply { background: rgba(124,106,247,0.14); color: var(--accent); }
+        .history-btn.delete  { background: rgba(241,107,107,0.1); color: var(--danger); }
+
+        /* History card body — categorized */
+        .history-body {
+            display: none; border-top: 1px solid var(--border); padding: 14px 16px;
+        }
+        .history-card.open .history-body { display: block; }
+
+        /* Budget info row inside history card */
+        .history-budget-info {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 0 0 10px 0; margin-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-budget-pill {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; padding: 4px 10px; border-radius: 100px;
+            font-family: 'Space Grotesk', sans-serif;
+            background: rgba(124,106,247,0.14); color: var(--accent);
+        }
+        .history-budget-chip {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.75rem; color: var(--text2);
+        }
+        .history-budget-chip span.chip-label { color: var(--muted); font-size: 0.72rem; font-weight: 500; }
+        .history-budget-chip span.chip-val { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        .history-budget-chip span.chip-val.accent { color: var(--accent); }
+        .history-budget-chip span.chip-val.safe { color: var(--safe); }
+
+        .history-body-totals {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 0 10px 0; margin-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-body-totals-label { font-size: 0.73rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .history-body-totals-val { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.96rem; color: var(--accent2); }
+
+        .history-cat-block { margin-bottom: 12px; }
+        .history-cat-block:last-child { margin-bottom: 0; }
+        .history-cat-label {
+            font-size: 0.73rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; padding: 3px 10px; border-radius: 100px;
+            font-family: 'Space Grotesk', sans-serif;
+            background: rgba(124,106,247,0.1); color: var(--accent);
+            display: inline-block; margin-bottom: 6px;
+        }
+
+        .history-expense-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 4px; border-bottom: 1px solid rgba(42,42,56,0.6);
+            font-size: 0.82rem;
+        }
+        .history-expense-row:last-child { border-bottom: none; }
+        .history-expense-name { font-weight: 500; color: var(--text); font-size: 0.88rem; }
+        .history-expense-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+        .history-expense-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .history-expense-amount { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.86rem; }
+        .history-expense-date { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card, .card, .category-block, .personality-bar { animation: fadeUp 0.3s ease both; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stats-grid .stat-card:last-child { grid-column: 1/-1; }
+            .forms-row { grid-template-columns: 1fr; }
+            .stat-value { font-size: 1.4rem; }
+            .history-header { flex-wrap: wrap; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ── HEADER ── -->
+    <header>
+        <div class="header-left">
+            <div class="logo">Budget<span>.</span>Tracker</div>
+            <form id="periodForm" method="POST" action="{{ url_for('set_budget') }}" style="display:none;">
+                <input type="hidden" name="budget" value="{{ budget|int }}">
+                <input type="hidden" name="period" id="periodInput" value="{{ period }}">
+                <input type="hidden" name="savings_goal" value="{{ savings_goal|int }}">
+            </form>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" onclick="toggleTheme()">🌙</button>
+            <div class="user-bar">
+                <div class="avatar">{{ current_user.email[0].upper() }}</div>
+                <span class="user-email">{{ current_user.email }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Period label -->
+    <div class="period-label-bar">
+        📅 <strong>{{ period_label }}</strong>
+    </div>
+
+    <!-- ── STATS ── -->
+    <div class="stats-grid">
+        <div class="stat-card budget">
+            <div class="stat-label">{{ period|title }} Budget</div>
+            <div class="stat-value">₱{{ "%.0f"|format(budget) }}</div>
+            {% if budget > 0 %}
+            <div class="progress-wrap">
+                <div class="progress-row">
+                    <span>Spent</span>
+                    <span>{{ "%.0f"|format([total/budget*100, 100]|min) }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"
+                         data-pct="{{ [total/budget*100, 100]|min }}"
+                         data-color="{% if total/budget >= 1 %}danger{% elif total/budget >= 0.7 %}warning{% else %}accent{% endif %}">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="stat-card spent">
+            <div class="stat-label">Total Spent</div>
+            <div class="stat-value">₱{{ "%.0f"|format(total) }}</div>
+        </div>
+        <div class="stat-card remaining {% if remaining < 0 %}over{% endif %}">
+            <div class="stat-label">Remaining</div>
+            <div class="stat-value">₱{{ "%.0f"|format(remaining) }}</div>
+        </div>
+    </div>
+
+    <!-- ── SAVINGS GOAL ── -->
+    {% if savings_goal > 0 %}
+    <div class="savings-bar-wrap">
+        <div class="savings-bar-top">
+            <span class="savings-bar-label">🎯 Savings Goal</span>
+            <span class="savings-bar-amount">₱{{ "%.0f"|format([remaining, 0]|max) }} / ₱{{ "%.0f"|format(savings_goal) }}</span>
+        </div>
+        <div class="savings-bar-track">
+            <div class="savings-bar-fill" data-pct="{{ savings_pct }}"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── PERSONALITY ── -->
+    <div class="personality-bar">
+        <span class="personality-label">Spending Type</span>
+        <div class="personality-right">
+            <span class="badge {{ personality_class }}">{{ personality }}</span>
+            {% if personality_detail %}
+            <span class="personality-detail">{{ personality_detail }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if suggestion %}
+    <div class="alert-banner">{{ suggestion }}</div>
+    {% endif %}
+
+    <!-- ── REVERT BANNER ── -->
+    {% if revert_snapshot %}
+    <div class="revert-banner">
+        <div class="revert-banner-text">
+            <strong>Expenses reapplied</strong> from <strong>{{ revert_snapshot.from_label }}</strong>
+            <small>{{ revert_snapshot.expenses|length }} previous expense(s) saved — revert or keep below.</small>
+        </div>
+        <div class="revert-banner-btns">
+            <a href="{{ url_for('keep_expenses') }}" class="revert-btn keep">✓ Keep</a>
+            <a href="{{ url_for('revert_reapply') }}"
+               class="revert-btn undo"
+               onclick="return confirm('Revert to your expenses before the reapply?')">↩ Revert</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── FORMS ── -->
+    <div class="forms-row">
+        <!-- Set Budget -->
+        <div class="card">
+            <div class="card-title">Set Budget</div>
+            <form method="POST" action="{{ url_for('set_budget') }}">
+                <div class="form-group">
+                    <label>Period</label>
+                    <div class="period-selector-form">
+                        <button type="button" class="period-btn-form {% if period == 'day' %}active{% endif %}" onclick="selectPeriodBtn(this,'day')">Day</button>
+                        <button type="button" class="period-btn-form {% if period == 'week' %}active{% endif %}" onclick="selectPeriodBtn(this,'week')">Week</button>
+                        <button type="button" class="period-btn-form {% if period == 'month' %}active{% endif %}" onclick="selectPeriodBtn(this,'month')">Month</button>
+                    </div>
+                    <input type="hidden" name="period" id="formPeriodInput" value="{{ period }}">
+                </div>
+                <div class="form-group">
+                    <label>Budget Amount (₱)</label>
+                    <input type="number" step="1" name="budget" value="{{ budget|int }}" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Savings Goal (₱) <span style="color:var(--muted);font-size:0.65rem;text-transform:none;letter-spacing:0;font-weight:400;">optional</span></label>
+                    <input type="number" step="1" name="savings_goal" value="{{ savings_goal|int }}" min="0" placeholder="e.g. 500">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Budget</button>
+            </form>
+        </div>
+
+        <!-- Add Expense -->
+        <div class="card">
+            <div class="card-title">Add Expense</div>
+            <form method="POST" action="{{ url_for('add_expense') }}">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" placeholder="e.g. Lunch" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+                    <div class="form-group">
+                        <label>Amount (₱)</label>
+                        <input type="number" step="1" name="amount" placeholder="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input type="text" name="category" placeholder="e.g. Food" list="category-suggestions">
+                        <datalist id="category-suggestions">
+                            <option value="Food">
+                            <option value="Transport">
+                            <option value="Bills">
+                            <option value="Shopping">
+                            <option value="Health">
+                            <option value="Entertainment">
+                            <option value="Other">
+                        </datalist>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">+ Add Expense</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── EXPENSE LIST ── -->
+    <div class="section-header">
+        <div class="section-title">
+            Expenses
+            <span class="count-pill">{{ expense_count }} item{{ 's' if expense_count != 1 else '' }}</span>
+        </div>
+        {% if expense_count > 0 %}
+        <a href="{{ url_for('clear_expenses') }}" class="clear-all-btn"
+           onclick="return confirm('Clear all {{ expense_count }} expense(s)? This cannot be undone.')">
+           Clear All
+        </a>
+        {% endif %}
+    </div>
+
+    {% if grouped_expenses %}
+        {% for category, items in grouped_expenses.items() %}
+        <div class="category-block">
+            <div class="category-header">
+                <span class="category-chip" style="background:rgba(124,106,247,0.1);color:var(--accent);">{{ category }}</span>
+            </div>
+            <div class="expense-list">
+                {% for e in items %}
+                <div class="expense-item">
+                    <div class="expense-left">
+                        <div class="expense-icon">💳</div>
+                        <div>
+                            <div class="expense-name">{{ e.name }}</div>
+                            {% if e.date %}
+                            <div class="expense-meta">{{ e.date }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="expense-right">
+                        <span class="expense-amount">₱{{ "%.0f"|format(e.amount) }}</span>
+                        <a href="{{ url_for('delete_expense', expense_id=e.id) }}"
+                           class="delete-btn" title="Delete"
+                           onclick="return confirm('Delete this expense?')">✕</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="icon">💸</div>
+            <p>No expenses yet. Add your first one above!</p>
+        </div>
+    {% endif %}
+
+    <!-- ── HISTORY ── -->
+    <div class="history-section">
+        <div class="history-section-header">
+            <div class="history-section-title">
+                🗂 Expenses History
+                <span class="history-period-count">({{ history|length }} saved period{{ 's' if history|length != 1 else '' }})</span>
+            </div>
+        </div>
+
+        <div class="history-list">
+            {% if history %}
+                {% for snap in history %}
+                {# Build category groups for this snapshot #}
+                {% set snap_cats = {} %}
+                {% for e in snap.expenses %}
+                    {% set cat = e.category %}
+                    {% if cat not in snap_cats %}
+                        {% set _ = snap_cats.update({cat: []}) %}
+                    {% endif %}
+                    {% set _ = snap_cats[cat].append(e) %}
+                {% endfor %}
+
+                <div class="history-card" id="hcard-{{ snap.id }}">
+                    <div class="history-header" onclick="toggleHistoryCard('{{ snap.id }}')">
+                        <div class="history-header-left">
+                            <span class="history-period-icon">
+                                {% if snap.period == 'day' %}📅{% elif snap.period == 'week' %}📆{% else %}🗓{% endif %}
+                            </span>
+                            <div>
+                                <div class="history-label">{{ snap.label }}</div>
+                                <div class="history-meta">{{ snap.expenses|length }} expense{{ 's' if snap.expenses|length != 1 else '' }} · Budget ₱{{ "%.0f"|format(snap.budget) }}</div>
+                            </div>
+                        </div>
+                        <div class="history-header-right">
+                            <span class="history-total">₱{{ "%.0f"|format(snap.expenses|sum(attribute='amount')) }}</span>
+                            <div class="history-actions" onclick="event.stopPropagation()">
+                                <a href="{{ url_for('reapply_history', history_id=snap.id) }}"
+                                   class="history-btn reapply"
+                                   onclick="return confirm('Re-apply all {{ snap.expenses|length }} expense(s) from this period?')">↩ Reapply</a>
+                                <a href="{{ url_for('delete_history', history_id=snap.id) }}"
+                                   class="history-btn delete"
+                                   onclick="return confirm('Delete this history entry? This cannot be undone.')">✕ Delete</a>
+                            </div>
+                            <span class="history-arrow">▼</span>
+                        </div>
+                    </div>
+
+                    <div class="history-body">
+                        <!-- Budget info row: period + budget + savings goal -->
+                        <div class="history-budget-info">
+                            <span class="history-budget-pill">
+                                {% if snap.period == 'day' %}Day{% elif snap.period == 'week' %}Week{% else %}Month{% endif %}
+                            </span>
+                            <div class="history-budget-chip">
+                                <span class="chip-label">Budget</span>
+                                <span class="chip-val accent">₱{{ "%.0f"|format(snap.budget) }}</span>
+                            </div>
+                            {% if snap.savings_goal and snap.savings_goal > 0 %}
+                            <div class="history-budget-chip">
+                                <span class="chip-label">🎯 Savings Goal</span>
+                                <span class="chip-val safe">₱{{ "%.0f"|format(snap.savings_goal) }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Total summary -->
+                        <div class="history-body-totals">
+                            <span class="history-body-totals-label">Total Expenses</span>
+                            <span class="history-body-totals-val">₱{{ "%.0f"|format(snap.expenses|sum(attribute='amount')) }}</span>
+                        </div>
+
+                        <!-- Categorized expenses -->
+                        {% for cat, cat_items in snap_cats.items() %}
+                        <div class="history-cat-block">
+                            <span class="history-cat-label">{{ cat }}</span>
+                            {% for e in cat_items %}
+                            <div class="history-expense-row">
+                                <div>
+                                    <div class="history-expense-name">{{ e.name }}</div>
+                                </div>
+                                <div class="history-expense-right">
+                                    {% if e.date %}
+                                    <span class="history-expense-date">
+                                        {{ e.date | format_date }}
+                                    </span>
+                                    {% endif %}
+                                    <span class="history-expense-amount">₱{{ "%.0f"|format(e.amount) }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>No history yet. Completed periods are saved automatically.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Progress bars
+    document.querySelectorAll('.progress-fill').forEach(el => {
+        el.style.width = el.dataset.pct + '%';
+        el.style.background = 'var(--' + el.dataset.color + ')';
+    });
+
+    // Savings goal bar
+    document.querySelectorAll('.savings-bar-fill').forEach(el => {
+        el.style.width = (el.dataset.pct || 0) + '%';
+    });
+
+    // Period switcher (header pill)
+    function changePeriod(p) {
+        document.getElementById('periodInput').value = p;
+        document.getElementById('periodForm').submit();
+    }
+
+    // Period selector in Set Budget form
+    function selectPeriodBtn(btn, val) {
+        document.querySelectorAll('.period-btn-form').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('formPeriodInput').value = val;
+    }
+
+    // Individual history card toggle
+    function toggleHistoryCard(id) {
+        const card = document.getElementById('hcard-' + id);
+        card.classList.toggle('open');
+    }
+
+    // Theme toggle — key is per-account so light mode doesn't leak between users
+    const THEME_KEY = 'bt_theme_{{ current_user_email }}';
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            root.classList.add('light');
+            btn.textContent = '☀️';
+        } else {
+            root.classList.remove('light');
+            btn.textContent = '🌙';
+        }
+    }
+
+    function toggleTheme() {
+        const next = root.classList.contains('light') ? 'dark' : 'light';
+        localStorage.setItem(THEME_KEY, next);
+        applyTheme(next);
+    }
+
+    // Apply saved preference on load
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+</script>
+
+</body>
+</html>
