@@ -7,8 +7,16 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta
+from supabase import create_client
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Missing SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-in-production")
@@ -31,11 +39,9 @@ class User(UserMixin):
         self.id = email
         self.email = email
 
-users = {}
-
 @login_manager.user_loader
 def load_user(user_id):
-    return users.get(user_id)
+    return User(user_id)
 
 google_bp = make_google_blueprint(
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
@@ -49,17 +55,80 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix="/login")
 
-DATA_FILE = "expenses.json"
-
 def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            return json.load(f)
-    return {}
+    if not current_user.is_authenticated:
+        return {}
+
+    email = current_user.email
+    user_resp = supabase.table("users").select("*").eq("email", email).single().execute()
+    user_data = user_resp.data if user_resp.data else None
+
+    if not user_data:
+        user_data = default_user_data()
+        user_data["email"] = email
+        return {email: user_data}
+
+    expenses_resp = supabase.table("expenses").select("*").eq("user_email", email).order("date", {"ascending": True}).execute()
+    history_resp = supabase.table("history").select("*").eq("user_email", email).order("archived_at", {"ascending": False}).execute()
+
+    user_data["expenses"] = expenses_resp.data or []
+    user_data["history"] = history_resp.data or []
+    user_data.setdefault("revert_snapshot", None)
+
+    for k, v in default_user_data().items():
+        user_data.setdefault(k, v)
+
+    return {email: user_data}
 
 def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    if not isinstance(data, dict) or len(data) != 1:
+        return
+
+    email, user_data = next(iter(data.items()))
+    if email is None:
+        return
+
+    user_row = {
+        "email": email,
+        "budget": user_data.get("budget", 0),
+        "period": user_data.get("period", "month"),
+        "period_start": user_data.get("period_start", period_start_for(user_data.get("period", "month"))),
+        "savings_goal": user_data.get("savings_goal", 0)
+    }
+    supabase.table("users").upsert(user_row).execute()
+
+    supabase.table("expenses").delete().eq("user_email", email).execute()
+    expenses = user_data.get("expenses", []) or []
+    if expenses:
+        rows = []
+        for e in expenses:
+            rows.append({
+                "id": e.get("id"),
+                "user_email": email,
+                "name": e.get("name"),
+                "amount": e.get("amount"),
+                "category": e.get("category"),
+                "date": e.get("date"),
+            })
+        supabase.table("expenses").insert(rows).execute()
+
+    supabase.table("history").delete().eq("user_email", email).execute()
+    history = user_data.get("history", []) or []
+    if history:
+        rows = []
+        for h in history:
+            rows.append({
+                "id": h.get("id"),
+                "user_email": email,
+                "period": h.get("period"),
+                "period_start": h.get("period_start"),
+                "label": h.get("label"),
+                "budget": h.get("budget"),
+                "savings_goal": h.get("savings_goal"),
+                "expenses": h.get("expenses"),
+                "archived_at": h.get("archived_at"),
+            })
+        supabase.table("history").insert(rows).execute()
 
 def default_user_data():
     return {
@@ -531,9 +600,7 @@ def google_login():
     if not resp.ok:
         return "Failed to fetch user info"
     email = resp.json()["email"]
-    if email not in users:
-        users[email] = User(email)
-    login_user(users[email])
+    login_user(User(email))
     return redirect("/")
 
 @app.route("/logout")

@@ -41,12 +41,15 @@ A modern, user-friendly web application for tracking personal expenses and manag
 
 4. **Set up environment variables**:
    - Create a `.env` file in the root directory
-   - Add your Google OAuth credentials:
+   - Add your Google OAuth and Supabase credentials:
      ```
      SECRET_KEY=your-flask-secret-key
      GOOGLE_CLIENT_ID=your-google-client-id
      GOOGLE_CLIENT_SECRET=your-google-client-secret
+     SUPABASE_URL=https://your-project.supabase.co
+     SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
      ```
+   - Do not commit `.env` to GitHub.
 
 5. **Run the application**:
    ```bash
@@ -66,10 +69,18 @@ The app is configured for easy deployment on Vercel:
    - `SECRET_KEY`
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
 
 3. **Deploy**: Vercel handles the build and deployment automatically
 
-**Note**: Currently uses local JSON storage. For production, migrate to a database like Supabase or PostgreSQL.
+**Important**: This app now uses Supabase for storage, so you must create the database tables before the app will work.
+
+## Supabase setup
+
+1. In Supabase, open the SQL editor.
+2. Run the SQL in `supabase_schema.sql`.
+3. Confirm that `users`, `expenses`, and `history` tables exist.
 
 ## Usage
 
