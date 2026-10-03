@@ -114,7 +114,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Screenshots
 
-<img width="954" height="954" alt="image" src="https://github.com/user-attachments/assets/eceab283-bf79-4ae8-b157-3aaea4fb4bdb" />
+<img width="939" height="944" alt="Screenshot 2026-10-03 141832" src="https://github.com/user-attachments/assets/fa5a53cf-5776-44cc-af14-8b95fbe52694" />
 
 ---
 
