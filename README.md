@@ -114,11 +114,18 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Screenshots
 
-*Add screenshots of your app here*
+<img width="954" height="954" alt="image" src="https://github.com/user-attachments/assets/eceab283-bf79-4ae8-b157-3aaea4fb4bdb" />
+
+---
+
+<img width="992" height="952" alt="image" src="https://github.com/user-attachments/assets/5d4ac18c-f484-41b4-bb0e-6613a5f57eb4" />
+
+
+
 
 ## Live Demo
 
-*Add link to your deployed Vercel app here*
+
 
 ---
 
